@@ -1,36 +1,36 @@
 # -*- coding: utf-8 -*-
 """
-Deploying PyTorch in Python via a REST API with Flask
+플라스크를 활용하여 REST API로 파이토치 배포하기 
 ========================================================
-**Author**: `Avinash Sajjanshetty <https://avi.im>`_
+**저자**: `Avinash Sajjanshetty <https://avi.im>`_
+**번역**: `송진영 <https://github.com/diligejy>`_
 
-In this tutorial, we will deploy a PyTorch model using Flask and expose a
-REST API for model inference. In particular, we will deploy a pretrained
-DenseNet 121 model which detects the image.
+이번 튜토리얼에서는, 플라스크를 활용해서 파이토치 모델을 배포하고 REST API방식을 사용해서 모델 추론을 해보겠습니다. 
+특히, 이번엔 이미지를 탐지하도록 사전학습된 Dense 121 모델을 배포해보겠습니다.
 
-.. tip:: All the code used here is released under MIT license and is available on `Github <https://github.com/avinassh/pytorch-flask-api>`_.
+.. 공지:: 여기 있는 모든 코드는 MIT 라이센스하에 배포되며 `깃허브 <https://github.com/avinassh/pytorch-flask-api>`_.에서 사용 가능합니다.
 
-This represents the first in a series of tutorials on deploying PyTorch models
-in production. Using Flask in this way is by far the easiest way to start
-serving your PyTorch models, but it will not work for a use case
-with high performance requirements. For that:
+이 글은 실상황(in production) 파이토치 모델 배포 튜토리얼 시리즈의 첫 번째 글입니다. 
+플라스크를 이렇게 사용하는 건 여러분의 파이토치 모델을 서빙하는 가장 쉬운 방법일 것입니다. 
+하지만 고성능 요구사항에는 적합하지 않을 수 있습니다. 
 
-    - If you're already familiar with TorchScript, you can jump straight into our
-      `Loading a TorchScript Model in C++ <https://pytorch.org/tutorials/advanced/cpp_export.html>`_ tutorial.
+그럴 경우에 아래의 문서를 참조하시길 바랍니다.
 
-    - If you first need a refresher on TorchScript, check out our
-      `Intro a TorchScript <https://pytorch.org/tutorials/beginner/Intro_to_TorchScript_tutorial.html>`_ tutorial.
+    - 만약 TorchScript에 익숙하시다면, `C++에서 TorchScript 모델 로딩하기<https://pytorch.org/tutorials/advanced/cpp_export.html>`_ 튜토리얼을 참고하실 수 있습니다.
+
+    - 만약 TorchScript를 까먹으셨다면, `TorchScript 입문<https://pytorch.org/tutorials/beginner/Intro_to_TorchScript_tutorial.html>`_ 튜토리얼을 참고하실 수 있습니다.
 """
 
 
 ######################################################################
-# API Definition
+# API 정의
 # --------------
 #
-# We will first define our API endpoints, the request and response types. Our
-# API endpoint will be at ``/predict`` which takes HTTP POST requests with a
-# ``file`` parameter which contains the image. The response will be of JSON
-# response containing the prediction:
+# 먼저 API 엔드포인트를 요청(request)과 응답(response) 타입으로 정의하겠습니다.
+# API 엔드포인트의 형태는 ``/predict``가 될 것입니다. 
+# 이 엔드포인트는 HTTP POST 방식으로 이미지를 포함하는 file 매개변수를 요청합니다.
+# 응답은 JSON 형식이 될 것입니다.
+# 응답에는 다음과 같은 예측치가 포함됩니다 
 #
 # ::
 #
@@ -39,10 +39,10 @@ with high performance requirements. For that:
 #
 
 ######################################################################
-# Dependencies
+# 의존사항(Dependencies)
 # ------------
 #
-# Install the required dependencies by running the following command:
+# 아래의 명령어를 실행시켜서 실행에 필요한 의존사항을 설치하세요:
 #
 # ::
 #
@@ -50,10 +50,10 @@ with high performance requirements. For that:
 
 
 ######################################################################
-# Simple Web Server
+# 간단한 웹 서버
 # -----------------
 #
-# Following is a simple web server, taken from Flask's documentation
+# 아래는 플라스크 공식문서에서 가져온 간단한 웹 서버 예시입니다.
 
 
 from flask import Flask
@@ -65,33 +65,30 @@ def hello():
     return 'Hello World!'
 
 ###############################################################################
-# Save the above snippet in a file called ``app.py`` and you can now run a
-# Flask development server by typing:
+# 위에 있는 코드를 ``app.py`` 파일로 저장하신 다음 아래와 같이 입력하시면 플라스크 개발 서버를 실행하실 수 있습니다:
 #
 # ::
 #
 #     $ FLASK_ENV=development FLASK_APP=app.py flask run
 
 ###############################################################################
-# When you visit ``http://localhost:5000/`` in your web browser, you will be
-# greeted with ``Hello World!`` text
+# 웹 브라우저를 여신 다음 ``http://localhost:5000/``을 띄워보세요. ``Hello World!``라는 텍스트를 보실 수 있을 겁니다.
 
 ###############################################################################
-# We will make slight changes to the above snippet, so that it suits our API
-# definition. First, we will rename the method to ``predict``. We will update
-# the endpoint path to ``/predict``. Since the image files will be sent via
-# HTTP POST requests, we will update it so that it also accepts only POST
-# requests:
-
+# 위의 코드를 약간 바꿔서 우리 API 정의에 맞게 만들어보겠습니다.  
+# 첫째, 메서드 이름을 ``predict``로 바꿔보겠습니다. 
+# 엔드포인트 주소는 ``/predict``로 바꾸겠습니다. 
+# 이미지 파일은 HTTP POST 요청을 따라 전송될 것이기 때문에, POST 방식만 받아서 업데이트할 것입니다.
+# Since the image files will be sent via HTTP POST requests, we will update it so that it also accepts only POST
+# 요청(requests):
 
 @app.route('/predict', methods=['POST'])
 def predict():
     return 'Hello World!'
 
 ###############################################################################
-# We will also change the response type, so that it returns a JSON response
-# containing ImageNet class id and name. The updated ``app.py`` file will
-# be now:
+# 응답 방식을 바꿔서 ImageNet 클래스 id와 name을 포함하는 JSON으로 반환하도록 만들어보겠습니다.
+# 수정된 ``app.py`` 파일은 이렇게 바뀔 것입니다: 
 
 from flask import Flask, jsonify
 app = Flask(__name__)
@@ -102,25 +99,21 @@ def predict():
 
 
 ######################################################################
-# Inference
+# 추론
 # -----------------
+# 다음 섹션에서는 추론 코드 작성을 중점을 해보겠습니다. 
+# 여기에는 두 부분이 포함됩니다. 
+# 하나는 DenseNet에 공급할 수 있도록 이미지를 준비하는 부분이고 다음은 모델에서 실제 예측을 가져오는 코드를 작성하는 부분입니다.
 #
-# In the next sections we will focus on writing the inference code. This will
-# involve two parts, one where we prepare the image so that it can be fed
-# to DenseNet and next, we will write the code to get the actual prediction
-# from the model.
-#
-# Preparing the image
+# 이미지 준비하기
 # ~~~~~~~~~~~~~~~~~~~
 #
-# DenseNet model requires the image to be of 3 channel RGB image of size
-# 224 x 224. We will also normalize the image tensor with the required mean
-# and standard deviation values. You can read more about it
-# `here <https://pytorch.org/vision/stable/models.html>`_.
-#
-# We will use ``transforms`` from ``torchvision`` library and build a
-# transform pipeline, which transforms our images as required. You
-# can read more about transforms `here <https://pytorch.org/vision/stable/transforms.html>`_.
+# DenseNet 모델에서는 이미지가 224 x 224 크기의 3채널 RGB 이미지여야 합니다.
+# 또한 필요한 평균 및 표준 편차 값으로 이미지 텐서를 정규화합니다.
+# 더 알아보고 싶은 분은 `여기 <https://pytorch.org/vision/stable/models.html>`_ 를 참조하세요. 
+# 
+# ``torchvision``라이브러리에서 ``transforms``을 사용해서 이미지를 요구사항에 맞춰 변환해주는 transform pipeline을 만들어보겠습니다.
+# transforms에 대해 더 알아보고 싶으시다면 `여기 <https://pytorch.org/vision/stable/transforms.html>`_ 를 참조하세요.
 
 import io
 
@@ -139,10 +132,10 @@ def transform_image(image_bytes):
 
 
 ######################################################################
-# The above method takes image data in bytes, applies the series of transforms
-# and returns a tensor. To test the above method, read an image file in
-# bytes mode (first replacing `../_static/img/sample_file.jpeg` with the actual
-# path to the file on your computer) and see if you get a tensor back:
+# 위에 있는 메소드는 이미지 데이터를 바이트로 바꿔주고, 여러 변환(transforms) 단계를 거쳐 텐서(tensor)를 반환해 줍니다.
+# 메소드를 테스트 하기 위해서, 이미지 파일을 바이트 모드로 읽어주세요. 
+# (먼저 `../_static/img/sample_file.jpeg`를 실제 여러분의 컴퓨터 파일 경로로 바꿔주세요)
+# 그러면 텐서를 보실 수 있을 겁니다:
 
 with open("../_static/img/sample_file.jpeg", 'rb') as f:
     image_bytes = f.read()
@@ -150,20 +143,19 @@ with open("../_static/img/sample_file.jpeg", 'rb') as f:
     print(tensor)
 
 ######################################################################
-# Prediction
+# 예측
 # ~~~~~~~~~~~~~~~~~~~
 #
-# Now will use a pretrained DenseNet 121 model to predict the image class. We
-# will use one from ``torchvision`` library, load the model and get an
-# inference. While we'll be using a pretrained model in this example, you can
-# use this same approach for your own models. See more about loading your
-# models in this :doc:`tutorial </beginner/saving_loading_models>`.
-
+# 지금부터 사전학습된 DenseNet 121 모델을 이미지 클래스를 예측하는데 사용해보겠습니다.
+# ``torchvision`` 라이브러리에서 하나를 사용해서 모델을 불러오고 추론을 해보겠습니다. 
+# 이 예시에서는 사전학습된 모델을 사용하겠지만, 여러분도 여러분의 모델에 같은 방식으로 적용해보실 수 있습니다.
+# 모델 불러오기에 대해 더 알아보고 싶으신 분은 이 :doc:`tutorial </beginner/saving_loading_models>` 를 참조하세요.
+ 
 from torchvision import models
 
-# Make sure to set `weights` as `'IMAGENET1K_V1'` to use the pretrained weights:
+# `weights`는 사전학습된 가중치를 사용하기 위해 `IMAGENET1K_V1`으로 설정합니다: 
 model = models.densenet121(weights='IMAGENET1K_V1')
-# Since we are using our model only for inference, switch to `eval` mode:
+# 우리는 모델을 오직 추론을 위해 사용하기 떄문에, `eval` 모드로 바꿔줍니다:
 model.eval()
 
 
@@ -175,15 +167,12 @@ def get_prediction(image_bytes):
 
 
 ######################################################################
-# The tensor ``y_hat`` will contain the index of the predicted class id.
-# However, we need a human readable class name. For that we need a class id
-# to name mapping. Download
-# `this file <https://s3.amazonaws.com/deep-learning-models/image-models/imagenet_class_index.json>`_
-# as ``imagenet_class_index.json`` and remember where you saved it (or, if you
-# are following the exact steps in this tutorial, save it in
-# `tutorials/_static`). This file contains the mapping of ImageNet class id to
-# ImageNet class name. We will load this JSON file and get the class name of
-# the predicted index.
+# ``y_hat`` 텐서는 예측된 클래스 id의 인덱스를 포함합니다.
+# 하지만, 우리는 인간이 읽을 수 있는 클래스 name을 필요로 합니다. 
+# 클래스 id를 name에 매핑하기 위해, `이 파일 <https://s3.amazonaws.com/deep-learning-models/image-models/imagenet_class_index.json>`_ 을 ``imagenet_class_index.json``로 다운로드 하십시오.
+# 그리고 어디에 저장해두었는지 기억해두십시오. (만약 여러분이 이 튜토리얼을 정확하게 따라오셨다면, `tutorials/_static`에 저장하십시오)
+# 이 파일을 ImageNet 클래스의 id와 name 매핑 데이터가 포함되어있습니다. 
+# 이 JSON 파일을 사용해서 예측된 인덱스의 클래스 name을 도출해보겠습니다.
 
 import json
 
@@ -198,45 +187,37 @@ def get_prediction(image_bytes):
 
 
 ######################################################################
-# Before using ``imagenet_class_index`` dictionary, first we will convert
-# tensor value to a string value, since the keys in the
-# ``imagenet_class_index`` dictionary are strings.
-# We will test our above method:
-
+# ``imagenet_class_index`` 딕셔너리를 사용하기 전에, 먼저 텐서 값을 문자열 값으로 바꿔주겠습니다. 
+# 왜냐하면 ``imagenet_class_index``의 키값은 문자열이기 때문입니다. 
+# 위에 있는 메소드를 테스트해보겠습니다:
 
 with open("../_static/img/sample_file.jpeg", 'rb') as f:
     image_bytes = f.read()
     print(get_prediction(image_bytes=image_bytes))
 
 ######################################################################
-# You should get a response like this:
+# 실행하면 아래처럼 결과가 나와야 합니다:
 
 ['n02124075', 'Egyptian_cat']
 
 ######################################################################
-# The first item in array is ImageNet class id and second item is the human
-# readable name.
+# 
+# 배열의 첫번째 요소는 ImageNet 클래스의 id이고, 두 번째 요소는 사람이 읽을 수 있는 name입니다.
 #
-# .. Note ::
-#    Did you notice that ``model`` variable is not part of ``get_prediction``
-#    method? Or why is model a global variable? Loading a model can be an
-#    expensive operation in terms of memory and compute. If we loaded the model in the
-#    ``get_prediction`` method, then it would get unnecessarily loaded every
-#    time the method is called. Since, we are building a web server, there
-#    could be thousands of requests per second, we should not waste time
-#    redundantly loading the model for every inference. So, we keep the model
-#    loaded in memory just once. In
-#    production systems, it's necessary to be efficient about your use of
-#    compute to be able to serve requests at scale, so you should generally
-#    load your model before serving requests.
+# .. 주목 ::
+#    ``model`` 변수가 ``get_prediction`` 메서드의 일부가 아님을 알고 계신가요? 또는 모델이 전역 변수인 이유는 무엇일까요?
+#    모델 로드는 메모리 및 컴퓨팅 측면에서 비용이 많이 드는 작업일 수 있습니다.
+#    ``get_prediction`` 메서드에서 모델을 로드하면 메서드가 호출될 때마다 불필요하게 로드됩니다.
+#    웹 서버를 구축하고 있으므로 초당 수천 건의 요청이 있을 수 있으므로 모든 추론에 대해 모델을 중복 로드하는 데 시간을 낭비해서는 안 됩니다.
+#    따라서 메모리에 로드된 모델을 한 번만 유지합니다.
+#    프로덕션 시스템에서는 규모에 맞게 요청을 처리할 수 있도록 컴퓨팅을 효율적으로 사용해야 하므로 일반적으로 요청을 처리하기 전에 모델을 로드해야 합니다.
 
 ######################################################################
-# Integrating the model in our API Server
+# API 서버에 모델을 통합하기
 # ---------------------------------------
 #
-# In this final part we will add our model to our Flask API server. Since
-# our API server is supposed to take an image file, we will update our ``predict``
-# method to read files from the requests:
+# 이 마지막 파트에서는 플라스크 API에 모델을 추가해보겠습니다. 
+# API 서버는 이미지 파일을 가져와야 하므로 ``predict`` 메서드를 업데이트하여 요청에서 파일을 읽습니다:
 #
 # .. code-block:: python
 #
@@ -253,9 +234,7 @@ with open("../_static/img/sample_file.jpeg", 'rb') as f:
 #            return jsonify({'class_id': class_id, 'class_name': class_name})
 
 ######################################################################
-# The ``app.py`` file is now complete. Following is the full version; replace
-# the paths with the paths where you saved your files and it should run:
-#
+# 이제 ``app.py`` 파일이 완성되었습니다. 다음은 정식 버전입니다. 경로를 파일을 저장한 경로로 바꾸면 다음이 실행됩니다.
 # .. code-block:: python
 #
 #   import io
@@ -305,16 +284,14 @@ with open("../_static/img/sample_file.jpeg", 'rb') as f:
 #       app.run()
 
 ######################################################################
-# Let's test our web server! Run:
+# 웹 서버를 테스트해 봅시다! 실행해보세요:
 #
 # ::
 #
 #     $ FLASK_ENV=development FLASK_APP=app.py flask run
 
 #######################################################################
-# We can use the
-# `requests <https://pypi.org/project/requests/>`_
-# library to send a POST request to our app:
+# `requests <https://pypi.org/project/requests/>`_ 라이브러리를 사용해서 POST 요청을 보낼 수 있습니다.
 #
 # .. code-block:: python
 #
@@ -324,7 +301,7 @@ with open("../_static/img/sample_file.jpeg", 'rb') as f:
 #                         files={"file": open('<PATH/TO/.jpg/FILE>/cat.jpg','rb')})
 
 #######################################################################
-# Printing `resp.json()` will now show the following:
+# `resp.json()`은 다음과 같이 표시됩니다.
 #
 # ::
 #
@@ -332,39 +309,33 @@ with open("../_static/img/sample_file.jpeg", 'rb') as f:
 #
 
 ######################################################################
-# Next steps
+# 다음 단계
 # --------------
 #
-# The server we wrote is quite trivial and may not do everything
-# you need for your production application. So, here are some things you
-# can do to make it better:
+# 
+# 우리가 작성한 서버는 매우 초보적인 단계이기 때문에 프로덕션 애플리케이션에 필요한 모든 작업을 수행하지 못할 수 있습니다.
+# 그래서 더 좋게 만들기 위해 할 수 있는 몇 가지 일들이 있습니다:
 #
-# - The endpoint ``/predict`` assumes that always there will be a image file
-#   in the request. This may not hold true for all requests. Our user may
-#   send image with a different parameter or send no images at all.
 #
-# - The user may send non-image type files too. Since we are not handling
-#   errors, this will break our server. Adding an explicit error handing
-#   path that will throw an exception would allow us to better handle
-#   the bad inputs
+# - 엔드포인트 ``/predict``는 요청에 이미지 파일이 항상 있다고 가정합니다.
+#   이는 모든 요청에 적용되지 않을 수 있습니다.
+#   사용자는 다른 매개변수로 이미지를 보내거나 이미지를 전혀 보내지 않을 수 있습니다.
+# 
+# - 이미지 형식이 아닌 파일도 보낼 수 있습니다. 하지만 오류를 처리하지 않기 때문에 서버가 중단됩니다.
+#   예외를 발생시키는 명시적인 오류 처리 경로를 추가하면 잘못된 입력을 더 잘 처리할 수 있습니다.
 #
-# - Even though the model can recognize a large number of classes of images,
-#   it may not be able to recognize all images. Enhance the implementation
-#   to handle cases when the model does not recognize anything in the image.
+# - 모델이 많은 수의 이미지 클래스를 인식할 수 있지만 모든 이미지를 인식하지 못할 수 있습니다.
+#   모델이 이미지에서 아무것도 인식하지 못하는 경우를 처리하도록 구현을 향상시킵니다.
 #
-# - We run the Flask server in the development mode, which is not suitable for
-#   deploying in production. You can check out `this tutorial <https://flask.palletsprojects.com/en/1.1.x/tutorial/deploy/>`_
-#   for deploying a Flask server in production.
+# - 프로덕션 환경에 배포하기에 적합하지 않은 개발 모드에서 플라스크 서버를 실행합니다.
+#   프로덕션에서 플라스크 서버를 배포하는 방법은 `이 튜토리얼 <https://flask.palletsprojects.com/en/1.1.x/tutorial/deploy/>`_을 확인하세요.
 #
-# - You can also add a UI by creating a page with a form which takes the image and
-#   displays the prediction. Check out the `demo <https://pytorch-imagenet.herokuapp.com/>`_
-#   of a similar project and its `source code <https://github.com/avinassh/pytorch-flask-api-heroku>`_.
-#
-# - In this tutorial, we only showed how to build a service that could return predictions for
-#   a single image at a time. We could modify our service to be able to return predictions for
-#   multiple images at once. In addition, the `service-streamer <https://github.com/ShannonAI/service-streamer>`_
-#   library automatically queues requests to your service and samples them into mini-batches
-#   that can be fed into your model. You can check out `this tutorial <https://github.com/ShannonAI/service-streamer/wiki/Vision-Recognition-Service-with-Flask-and-service-streamer>`_.
-#
-# - Finally, we encourage you to check out our other tutorials on deploying PyTorch models
-#   linked-to at the top of the page.
+# - 이미지를 가져와 예측을 표시하는 양식으로 페이지를 만들어 UI를 추가할 수도 있습니다.
+#   유사한 프로젝트의 `데모 <https://pytorch-imagenet.herokuapp.com/>`_와 `소스 코드 <https://github.com/avinassh/pytorch-flask-api-heroku>`_를 확인하세요.
+# 
+# - 이 튜토리얼에서는 한 번에 하나의 이미지에 대한 예측을 반환할 수 있는 서비스를 빌드하는 방법만 보여주었습니다.
+#   한 번에 여러 이미지에 대한 예측을 반환할 수 있도록 서비스를 수정할 수 있습니다. 
+#   또한 `service-streamer <https://github.com/ShannonAI/service-streamer>`_ 라이브러리는 서비스에 대한 요청을 자동으로 대기열에 넣고 모델에 공급할 수 있는 미니 배치로 샘플링합니다.
+#   `이 튜토리얼 <https://github.com/ShannonAI/service-streamer/wiki/Vision-Recognition-Service-with-Flask-and-service-streamer>`_을 확인할 수 있습니다.
+# 
+# - 마지막으로 페이지 상단에 연결된 PyTorch 모델 배포에 대한 다른 자습서를 확인하는 것이 좋습니다.
