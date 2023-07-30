@@ -1,16 +1,14 @@
-Using the PyTorch C++ Frontend
+PyTorch C++ 프론트엔드 사용하기
 ==============================
 
-The PyTorch C++ frontend is a pure C++ interface to the PyTorch machine learning
-framework. While the primary interface to PyTorch naturally is Python, this
-Python API sits atop a substantial C++ codebase providing foundational data
-structures and functionality such as tensors and automatic differentiation. The
-C++ frontend exposes a pure C++11 API that extends this underlying C++ codebase
-with tools required for machine learning training and inference. This includes a
-built-in collection of common components for neural network modeling; an API to
-extend this collection with custom modules; a library of popular optimization
-algorithms such as stochastic gradient descent; a parallel data loader with an
-API to define and load datasets; serialization routines and more.
+파이토치 C++ 프론트엔드란 파이토치 머신 러닝 프레임워크에 대한 순수 C++ 인터페이스입니다.
+파이썬에서 파이토치는 자연스러운 인터페이스지만, 사실 파이썬 API는 상당한 양의 C++ 코드베이스
+위에서 제공되고 있습니다. 이러한 C++ 코드베이스는 텐서나 자동 미분 같은 중요한 자료 구조나
+기능들을 제공합니다. C++ 프론트엔드는 이런 기반이 되는 C++ 코드베이스와 머신 러닝 학습,
+추론에 필요한 툴을 순수 C++11 API를 확장한 형태로 제공합니다. 여기에는 신경망 모델링에서
+많이 사용되는 내장(built-in) 컬렉션이 포함됩니다. 예를 들어, 이러한 내장 컬렉션을 확장하여
+커스텀 모듈로 확장하는 API, 확률적 경사 하강법과 같은 유명한 최적화 알고리즘 라이브러리,
+데이터셋을 정의하고 불러올 수 있는 API와 병렬 데이터로더, 직렬화 루틴 등이 있습니다.
 
 This tutorial will walk you through an end-to-end example of training a model
 with the C++ frontend. Concretely, we will be training a `DCGAN
